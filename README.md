@@ -1,0 +1,6 @@
+- варіант 18
+- структура проєкту
+- як запустити: docker compose up --build
+- Swagger: http://localhost:8080/swagger
+- RabbitMQ UI: http://localhost:15672
+- login/password: guest/guest

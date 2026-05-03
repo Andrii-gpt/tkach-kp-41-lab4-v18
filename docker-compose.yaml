@@ -1,0 +1,65 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: lab4-rabbitmq
+    hostname: lab4-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  lab4-api:
+    build:
+      context: .
+      dockerfile: Lab4.Api/Dockerfile
+    container_name: lab4-api
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "guest"
+      RabbitMq__Password: "guest"
+      RabbitMq__DirectExchangeName: "tracking.direct.exchange"
+      RabbitMq__TopicExchangeName: "patient.topic.exchange"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  lab4-direct-worker:
+    build:
+      context: .
+      dockerfile: Lab4.DirectWorker/Dockerfile
+    container_name: lab4-direct-worker
+    environment:
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "guest"
+      RabbitMq__Password: "guest"
+      RabbitMq__DirectExchangeName: "tracking.direct.exchange"
+      RabbitMq__TopicExchangeName: "patient.topic.exchange"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  lab4-topic-worker:
+    build:
+      context: .
+      dockerfile: Lab4.TopicWorker/Dockerfile
+    container_name: lab4-topic-worker
+    environment:
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "guest"
+      RabbitMq__Password: "guest"
+      RabbitMq__DirectExchangeName: "tracking.direct.exchange"
+      RabbitMq__TopicExchangeName: "patient.topic.exchange"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
